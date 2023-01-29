@@ -55,7 +55,7 @@ AS7331::AS7331(I2Cdev* i2c_bus)
  void AS7331::setMeasurementMode()
  {
   uint8_t temp = _i2c_bus->readByte(AS7331_ADDRESS, AS7331_OSR);  
-  _i2c_bus->writeByte(AS7331_ADDRESS, AS7331_OSR, temp | 0x03); // set bits 0,1 for measurement mode
+  _i2c_bus->writeByte(AS7331_ADDRESS, AS7331_OSR, temp | 0x83); // set bits 0,1 for measurement mode, start measurements
  }
 
 
@@ -117,6 +117,13 @@ AS7331::AS7331(I2Cdev* i2c_bus)
    return (uint16_t)(((uint16_t)rawData[1]) << 8 | rawData[0]);
   }
 
- 
 
-  
+  void AS7331::readAllData(uint16_t * dest)
+  {
+   uint8_t rawData[8];  // 16-bit status register data stored here
+   _i2c_bus->readBytes(AS7331_ADDRESS, AS7331_TEMP, 8, &rawData[0]);
+   dest[0] =  (uint16_t)(((uint16_t)rawData[1]) << 8 | rawData[0]);
+   dest[1]  =  (uint16_t)(((uint16_t)rawData[3]) << 8 | rawData[2]);
+   dest[2]  =  (uint16_t)(((uint16_t)rawData[5]) << 8 | rawData[4]);
+   dest[3]  =  (uint16_t)(((uint16_t)rawData[7]) << 8 | rawData[6]);
+ }
