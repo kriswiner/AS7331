@@ -1,2 +1,8 @@
 # AS7331
-Sample sketches for the AS7331 UVA/B/C light sensor by AMS
+Sample sketch for the [AS7331](https://www.mouser.com/catalog/specsheets/amsOsram_AS7331_DS001047_1-00.pdf) UV A/B/C light sensor by AMS
+
+Easy to use UV A/B/C light sensor from AMS. The sketch shows how to configure the sensor, make use of the power saving features, data ready interrut and properly scale the data while varying the gain and integration time. Basic error handling is included. SHould be a good place to start for more custom applications.
+
+~[AS7331](https://user-images.githubusercontent.com/6698410/215298161-abc613b3-15e3-4a7d-9e9e-55e6fc9d6ac8.jpg)
+
+Breakout board design can be found in the [OSH Park](https://oshpark.com/shared_projects/UWxzGGvE) shared space.
