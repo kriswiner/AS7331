@@ -73,6 +73,7 @@ class AS7331
   uint16_t readUVAData();
   uint16_t readUVBData();
   uint16_t readUVCData();
+  void     readAllData(uint16_t * dest);
   uint16_t getStatus();
 
   private:
