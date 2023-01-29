@@ -35,21 +35,21 @@ float VDDA, VBAT, VBUS, Temperature;
 #define AS7331_intPin   8    // interrupt pin definitions 
 
 // Specify sensor parameters //
-MMODE   mmode = AS7331_CMD_MODE;  // choices are modes are CONT, CMD, SYNS, SUND
+MMODE   mmode = AS7331_CONT_MODE;  // choices are modes are CONT, CMD, SYNS, SYND
 CCLK    cclk  = AS7331_1024;      // choices are 1.024, 2.048, 4.096, or 8.192 MHz
-uint8_t sb    = 0x01;             // standby enabled 0x01, standby disabled 0x00                    
-uint8_t breakTime = 100;          // sample time == 8 us x breakTime (0 - 255, or 0 - 2040us range), CONT or SYNX modes
+uint8_t sb    = 0x01;             // standby enabled 0x01 (to save power), standby disabled 0x00                    
+uint8_t breakTime = 40;           // sample time == 8 us x breakTime (0 - 255, or 0 - 2040 us range), CONT or SYNX modes
 
-uint8_t gain = 0x00; // ADCGain = 2^(11-gain), by 2s, 1 - 2048 range,  0 < gain = B max
-uint8_t time = 0x08; // 2^time in ms, so 0x09 is 2^9 = 512 ms, 0 < time = F max in HEX
+uint8_t gain = 8; // ADCGain = 2^(11-gain), by 2s, 1 - 2048 range,  0 < gain = 11 max, default 10
+uint8_t time = 9; // 2^time in ms, so 0x07 is 2^6 = 64 ms, 0 < time = 15 max, default  6
 
-//sensitivities at 1.024 MHz clock
-float lsbA = 304.69f / (float)(1 << (11 - gain)) / (float)(1 << time)/1024.0f;  // nW/cm^2
-float lsbB = 398.44f / (float)(1 << (11 - gain)) / (float)(1 << time)/1024.0f;
-float lsbC = 191.41f / (float)(1 << (11 - gain)) / (float)(1 << time)/1024.0f;
+// sensitivities at 1.024 MHz clock
+float lsbA = 304.69f / ((float)(1 << (11 - gain))) / ((float)(1 << time)/1024.0f) / 1000.0f;  // uW/cm^2
+float lsbB = 398.44f / ((float)(1 << (11 - gain))) / ((float)(1 << time)/1024.0f) / 1000.0f;
+float lsbC = 191.41f / ((float)(1 << (11 - gain))) / ((float)(1 << time)/1024.0f) / 1000.0f;
 
 // Logic flags to keep track of device states
-uint16_t tempData= 0, UVAData = 0, UVBData = 0, UVCData = 0;
+uint16_t tempData= 0, UVAData = 0, UVBData = 0, UVCData = 0, allData[4] = {0, 0, 0, 0};
 float temp_C = 0;
 bool AS7331_Ready_flag = false;
 uint16_t status = 0;
@@ -69,7 +69,6 @@ void setup()
   pinMode(myLed, OUTPUT);
   digitalWrite(myLed, LOW);   // toggle red led on
   delay(1000);                 // wait 1 second
-
 
   pinMode(AS7331_intPin, INPUT);  // define AS7331 data ready interrupt
 
@@ -91,6 +90,10 @@ void setup()
   Serial.print("STM32L4 MCU Temperature = "); Serial.println(Temperature, 2);
   Serial.println(" "); 
 
+   AS7331.powerUp();
+   AS7331.reset();      // software reset before initialization
+   delay(100); 
+
   // Read the AS7331 Chip ID register, this is a good test of communication
   Serial.println("AS7331 accelerometer...");
   byte AS7331_ID = AS7331.getChipID();  // Read CHIP_ID register for AS7331
@@ -99,22 +102,23 @@ void setup()
   delay(1000); 
 
   if(AS7331_ID == 0x21) // check if AS7331 has acknowledged
-  {
+   {
    Serial.println("AS7331 is online..."); Serial.println(" ");
-   
-   AS7331.reset();                                                // software reset before initialization
-   delay(100); 
 
+   Serial.print("Sensitivity channel A = "); Serial.print(lsbA, 5); Serial.println(" uW/cm^2");
+   Serial.print("Sensitivity channel B = "); Serial.print(lsbB, 5); Serial.println(" uW/cm^2");
+   Serial.print("Sensitivity channel C = "); Serial.print(lsbC, 5); Serial.println(" uW/cm^2");
+   
    AS7331.setConfigurationMode();
-   AS7331.powerUp();
    AS7331.init(mmode, cclk, sb, breakTime, gain, time);
    delay(100); // let sensor settle
    AS7331.setMeasurementMode();
 
-   }
+  }
   else 
   {
    if(AS7331_ID != 0x21) Serial.println(" AS7331 not functioning!");
+   while(1){}; // wait here forever for a power cycle
   }
   
   /* Set the RTC time */
@@ -150,12 +154,16 @@ void loop()
    if(status & 0x0008) {  // when data ready
    // Serial.print("status = 0x"); Serial.println(status, HEX);
 
-   UVAData = AS7331.readUVAData(); // read all of the data
-   UVBData = AS7331.readUVBData();
-   UVCData = AS7331.readUVCData();
-   tempData = AS7331.readTempData();
+   // UVAData = AS7331.readUVAData(); // read data in four separate I2C transactions takes 590 us 
+   // UVBData = AS7331.readUVBData();  
+   // UVCData = AS7331.readUVCData();
+   // tempData = AS7331.readTempData();
 
-   AS7331.powerDown(); // put the sensor back in lowest power mode until next conversion command  
+   AS7331.readAllData(allData); // burst read data in one I2C transaction takes 281 us
+   tempData = allData[0];
+   UVAData  = allData[1];
+   UVBData  = allData[2];
+   UVCData  = allData[3];
    }
    
    Serial.println("Raw counts");
@@ -165,9 +173,9 @@ void loop()
    Serial.println(" ");
    
    Serial.println("Scaled UV data");
-   Serial.print("AS7331 UVA (uW/cm^2)= "); Serial.println((float)(UVAData*1000)*lsbA);  
-   Serial.print("AS7331 UVB (uW/cm^2)= "); Serial.println((float)(UVBData*1000)*lsbB);  
-   Serial.print("AS7331 UVC (uW/cm^2)= "); Serial.println((float)(UVCData*1000)*lsbC);  
+   Serial.print("AS7331 UVA (uW/cm^2)= "); Serial.println((float)(UVAData)*lsbA);  
+   Serial.print("AS7331 UVB (uW/cm^2)= "); Serial.println((float)(UVBData)*lsbB);  
+   Serial.print("AS7331 UVC (uW/cm^2)= "); Serial.println((float)(UVCData)*lsbC);  
    Serial.println(" ");
 
    temp_C = tempData * 0.05f - 66.9f;
@@ -181,8 +189,7 @@ void loop()
   if (alarmFlag) { // update RTC output at the alarm
       alarmFlag = false;
 
-    AS7331.powerUp();  // power up the sensor
-    AS7331.oneShot();  // take one UV measurement (do one conversion), interrupt when data ready
+  if(mmode ==  AS7331_CMD_MODE) AS7331.oneShot();  // take one UV measurement (do one conversion), interrupt when data ready
            
     VDDA = STM32.getVREF();
     Temperature = STM32.getTemperature();
