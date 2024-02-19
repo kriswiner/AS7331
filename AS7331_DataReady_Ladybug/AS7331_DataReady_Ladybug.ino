@@ -78,10 +78,10 @@ void setup()
   delay(1000);
 
   Serial.println("Scan for I2C devices:");
-  i2c_0.I2Cscan();                // should detect AS7331 at 0x14 and BME280 at 0x77
+  i2c_0.I2Cscan();                // should detect AS7331 at 0x14  
   delay(1000);
   
-  /* Check internal STML082 and battery power configuration */
+  /* Check internal STML432 reference voltage and temperature  */
   VDDA = STM32.getVREF();
   Temperature = STM32.getTemperature();
   
