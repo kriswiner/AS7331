@@ -15,6 +15,6 @@ Sketch makes use of the STM32L432 ([Ladybug](https://www.tindie.com/products/tle
 
 Breakout board (pcb-only) design can be found in the [OSH Park](https://oshpark.com/shared_projects/UWxzGGvE) shared space.
 
-Fully-assembled breakout board available on [Tindie](https://www.tindie.com/products/onehorse/as7331-uvabc-light-sensor-breakout/) and at [Elecrow] (https://www.elecrow.com/as7331-uva-b-c-light-sensor-breakout.html).
+Fully-assembled breakout board available on [Tindie](https://www.tindie.com/products/onehorse/as7331-uvabc-light-sensor-breakout/) and at [Elecrow](https://www.elecrow.com/as7331-uva-b-c-light-sensor-breakout.html).
 
 2023 Copyright Tlera Corporation
