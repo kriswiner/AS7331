@@ -11,8 +11,10 @@ Both CMD (one shot) and CONT (continuous) modes work with the latter sample rate
 
 I haven't made SYNS or SYND modes work yet.
 
-Sketch makes use of the STM32L432 (Ladybug) development board but should work with just about any Arduino compatible dev board with minor modifications.
+Sketch makes use of the STM32L432 ([Ladybug](https://www.tindie.com/products/tleracorp/ladybug-stm32l432-development-board/)) development board but should work with just about any Arduino compatible dev board with minor modifications.
 
-Breakout board design can be found in the [OSH Park](https://oshpark.com/shared_projects/UWxzGGvE) shared space.
+Breakout board (pcb-only) design can be found in the [OSH Park](https://oshpark.com/shared_projects/UWxzGGvE) shared space.
+
+Fully-assembled breakout board available on [Tindie](https://www.tindie.com/products/onehorse/as7331-uvabc-light-sensor-breakout/) and at [Elecrow] (https://www.elecrow.com/as7331-uva-b-c-light-sensor-breakout.html).
 
 2023 Copyright Tlera Corporation
